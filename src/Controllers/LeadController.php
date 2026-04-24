@@ -17,9 +17,9 @@ class LeadController
         $params = $request->getQueryParams();
 
         $filters = [
-            'start_date' => $params['start_date'] ?? null,
-            'end_date'   => $params['end_date'] ?? null,
-            'status'     => $params['status'] ?? null,
+            'dateCreated' => $params['dateCreated'] ?? null,
+            'dateModified' => $params['dateModified'] ?? null,
+            'status' => $params['status'] ?? null,
         ];
 
         $page = max(0, (int)($params['page'] ?? 0));

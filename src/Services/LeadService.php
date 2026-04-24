@@ -16,11 +16,11 @@ class LeadService
         $params     = [];
 
         if (!empty($filters['start_date'])) {
-            $conditions[] = 'created_at >= :start_date';
+            $conditions[] = 'dateCreated >= :start_date';
             $params['start_date'] = $filters['start_date'];
         }
         if (!empty($filters['end_date'])) {
-            $conditions[] = 'created_at <= :end_date';
+            $conditions[] = 'dateCreated <= :end_date';
             $params['end_date'] = $filters['end_date'];
         }
         if (!empty($filters['status'])) {
@@ -75,21 +75,17 @@ class LeadService
         $this->validate($data, true);
 
         $stmt = $this->db->prepare(
-            'INSERT INTO leads (first_name, last_name, email, phone, company, status, source, notes, created_by, created_at, updated_at)
-             VALUES (:first_name, :last_name, :email, :phone, :company, :status, :source, :notes, :created_by, NOW(), NOW())
+            'INSERT INTO leads (fullName, emailAddress, phoneNumber, companyName, status, dateCeated, dateModified)
+             VALUES (:fullName, :emailAddress, :phoneNumber, :companyName, :status, NOW(), null)
              RETURNING *'
         );
 
         $stmt->execute([
-            'first_name' => $data['first_name'],
-            'last_name'  => $data['last_name'],
-            'email'      => $data['email'],
-            'phone'      => $data['phone'] ?? null,
-            'company'    => $data['company'] ?? null,
-            'status'     => $data['status'] ?? 'NEW',
-            'source'     => $data['source'] ?? null,
-            'notes'      => $data['notes'] ?? null,
-            'created_by' => $userId,
+            'fullName' => $data['fullName'],
+            'emailAddress' => $data['emailAddress'],
+            'phoneNumber' => $data['phoneNumber'] ?? null,
+            'companyName' => $data['companyName'] ?? null,
+            'status' => $data['status'] ?? 'NEW',
         ]);
 
         return $this->formatLead($stmt->fetch());
@@ -102,11 +98,11 @@ class LeadService
 
         $fields = [];
         $params = ['id' => $id];
-        $allowed = ['first_name', 'last_name', 'email', 'phone', 'company', 'status', 'source', 'notes'];
+        $allowed = ['fullName', 'emailAddress', 'phoneNumber', 'companyName', 'status'];
 
         foreach ($allowed as $field) {
             if (array_key_exists($field, $data)) {
-                $fields[]       = "{$field} = :{$field}";
+                $fields[] = "{$field} = :{$field}";
                 $params[$field] = $data[$field];
             }
         }
@@ -136,13 +132,12 @@ class LeadService
         $errors = [];
 
         if ($isCreate) {
-            if (empty($data['first_name'])) $errors[] = 'First name is required';
-            if (empty($data['last_name']))  $errors[] = 'Last name is required';
-            if (empty($data['email']))      $errors[] = 'Email is required';
+            if (empty($data['fullName']))  $errors[] = 'Full name is required';
+            if (empty($data['emailAddress']))      $errors[] = 'Email address is required';
         }
 
-        if (!empty($data['email']) && !filter_var($data['email'], FILTER_VALIDATE_EMAIL)) {
-            $errors[] = 'Invalid email format';
+        if (!empty($data['emailAddress']) && !filter_var($data['emailAddress'], FILTER_VALIDATE_EMAIL)) {
+            $errors[] = 'Invalid email address format';
         }
 
         $validStatuses = ['NEW', 'CONTACTED', 'QUALIFIED', 'LOST', 'WON'];
@@ -158,18 +153,14 @@ class LeadService
     private function formatLead(array $lead): array
     {
         return [
-            'id'         => (int)$lead['id'],
-            'first_name' => $lead['first_name'],
-            'last_name'  => $lead['last_name'],
-            'email'      => $lead['email'],
-            'phone'      => $lead['phone'],
-            'company'    => $lead['company'],
-            'status'     => $lead['status'],
-            'source'     => $lead['source'],
-            'notes'      => $lead['notes'],
-            'created_by' => (int)$lead['created_by'],
-            'created_at' => $lead['created_at'],
-            'updated_at' => $lead['updated_at'],
+            'id' => (int)$lead['id'],
+            'fullName' => $lead['fullName'],
+            'emailAddress' => $lead['emailAddress'],
+            'phoneNumber' => $lead['phoneNumber'],
+            'companyName' => $lead['companyName'],
+            'status' => $lead['status'],
+            'dateCreated' => $lead['dateCreated'],
+            'dateModified' => $lead['dateModified'],
         ];
     }
 }
